@@ -7,7 +7,7 @@ import (
 
 // FindIfaceWithAddr finds an interface
 // with a given address. returns empty string and error
-// if not found or error happenned.
+// if not found or error happened.
 func FindIfaceWithAddr(addr string) (string, error) {
 	ifaceName := ""
 	check := func(iface *net.Interface) {
