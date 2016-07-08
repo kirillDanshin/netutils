@@ -1,8 +1,11 @@
 package netutils
 
 import (
+	"log"
 	"net"
 	"sync"
+
+	"github.com/kirillDanshin/dlog"
 )
 
 // FindIfaceWithAddr finds an interface
@@ -13,10 +16,20 @@ func FindIfaceWithAddr(addr string) (string, error) {
 	check := func(iface *net.Interface) {
 		addrs, err := iface.Addrs()
 		if err != nil {
+			dlog.F("err: %s", err)
 			return
 		}
+		iface.Addrs()
 		for _, ifaceAddr := range addrs {
-			if ifaceAddr.String() == addr {
+			dlog.F("ifaceAddr=[%#+v] addr=[%#+v]", ifaceAddr.String(), addr)
+			_, cidrnet, err := net.ParseCIDR(ifaceAddr.String())
+			if err != nil {
+				dlog.F("Error: %s", err)
+				return
+			}
+			myaddr := net.ParseIP(addr)
+			dlog.F("contains=[%#+v]", cidrnet.Contains(myaddr))
+			if cidrnet.Contains(myaddr) {
 				ifaceName = iface.Name
 			}
 		}
@@ -24,14 +37,11 @@ func FindIfaceWithAddr(addr string) (string, error) {
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
+		log.Printf("err: %s", err)
 		return "", err
 	}
 
-	if len(ifaces) >= 8 {
-		err = IfacesWalk(ifaces, check)
-	} else {
-		err = IfacesWalkSync(ifaces, check)
-	}
+	err = IfacesWalkSync(ifaces, check)
 
 	return ifaceName, err
 }
